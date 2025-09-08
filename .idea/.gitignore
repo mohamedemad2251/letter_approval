@@ -1,8 +1,9 @@
 # Default ignored files
 /shelf/
+/.gitignore
 /workspace.xml
-letter_approval.iml
-misc.xml
-modules.xml
-inspectionProfiles
-vcs.xml
+/letter_approval.iml
+/misc.xml
+/modules.xml
+/inspectionProfiles/profiles_settings.xml
+/vcs.xml
