@@ -1,1 +1,13 @@
-# Initial Commit
+{
+    'name' : 'Letter Writer - Approvals',
+    'description' : ''' "Letter Writer's Extension. This module extends HR even further by requiring the Approvals module. Which then adds functionality for Letter Approval which automates Letter Writer even further."
+                    ''',
+    'depends' : ['base','letter_writer','letter_hr','approvals'],
+    'version' : '1.0',
+    'author' : 'Mohamed Emad',
+    'data' : [
+        'security/ir.model.access.csv',
+        'data/approval_category_data.xml'
+    ],
+    'installable' : True,
+}
