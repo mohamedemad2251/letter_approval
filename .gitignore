@@ -1,0 +1,11 @@
+# Default ignored files
+/shelf/
+/.idea/workspace.xml
+.gitignore
+/.idea/.gitignore
+/.idea/letter_approval.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/vcs.xml
+/.idea/
