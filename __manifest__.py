@@ -7,7 +7,8 @@
     'author' : 'Mohamed Emad',
     'data' : [
         'security/ir.model.access.csv',
-        'data/approval_category_data.xml'
+        'views/approval_category_views.xml',
+        'data/approval_category_data.xml',
     ],
     'installable' : True,
 }
