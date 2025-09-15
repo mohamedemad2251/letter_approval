@@ -58,7 +58,7 @@ class ApprovalRequest(models.Model):
                     raise UserError('You cannot approve without creating a letter (you are the only/last approver), consider creating a letter first.')
             else:
                 approvers = self.approver_ids.filtered(lambda a: a.status == 'pending')
-                if approvers and len(approvers) > 1 and not self.letter_ids:
+                if approvers and len(approvers) <= 1 and not self.letter_ids:
                     raise UserError('You cannot approve without creating a letter (you are the only/last approver), consider creating a letter first.')
 
         self.ensure_one()
