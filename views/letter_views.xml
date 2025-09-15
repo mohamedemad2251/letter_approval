@@ -13,23 +13,28 @@
                     <field name="request_owner_name" string="Request Owner"/>
                     <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
                 </xpath>
-<!--                <xpath expr="//field[@name='create_date']" position="after">-->
-<!--                    <button string="Download (PDF)" type="object" name="print_letter" class="oe_stat_button oe_inline oe_right" icon="fa-download" invisible=" status == 'draft' or status == 'rejected' "/>-->
+<!--                <xpath expr="//list" position="replace">-->
+<!--                    <list>-->
+<!--                        <field name="letter_name"/>-->
+<!--                        <field name="template_id"/>-->
+<!--                        <field name="template_module" widget="badge" decoration-danger="template_module == 'base'" decoration-primary="template_module == 'hr'"/>-->
+<!--                        <field name="create_date" string="Creation Date"/>-->
+<!--                        <button string="Download (PDF)"-->
+<!--                                type="object"-->
+<!--                                name="print_letter"-->
+<!--                                class="oe_stat_button oe_inline oe_right"-->
+<!--                                icon="fa-download"-->
+<!--                                invisible=" status == 'draft' or status == 'rejected' "/>-->
+<!--                    </list>-->
 <!--                </xpath>-->
-                <xpath expr="//list" position="replace">
-                    <list>
-                        <field name="letter_name"/>
-                        <field name="template_id"/>
-                        <field name="template_module" widget="badge" decoration-danger="template_module == 'base'" decoration-primary="template_module == 'hr'"/>
-                        <field name="create_date" string="Creation Date"/>
-                        <button string="Download (PDF)"
-                                type="object"
-                                name="print_letter"
-                                class="oe_stat_button oe_inline oe_right"
-                                icon="fa-download"
-                                invisible=" status == 'draft' or status == 'rejected' "/>
-                    </list>
+
+                <xpath expr="//field[@name='print_letter']" position="attributes">
+                    <attribute name="invisible">
+                        status == 'draft' or status == 'rejected'
+                    </attribute>
                 </xpath>
+
+
 
             </field>
         </record>
