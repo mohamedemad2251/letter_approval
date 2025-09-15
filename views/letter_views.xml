@@ -28,7 +28,7 @@
 <!--                    </list>-->
 <!--                </xpath>-->
 
-                <xpath expr="//field[@name='print_letter']" position="attributes">
+                <xpath expr="//button[@name='print_letter']" position="attributes">
                     <attribute name="invisible">
                         status == 'draft' or status == 'rejected'
                     </attribute>
