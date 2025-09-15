@@ -51,19 +51,37 @@ class ApprovalRequest(models.Model):
     # ACTIONS
     # -------------------------------
     def action_approve(self, approver=None):
-        if self.category_id.name == 'Letter Approval':
-            if self.approval_minimum > 1:
-                last_approver = self.approver_ids.filtered(lambda a: a.status == 'waiting')
-                if not last_approver and not self.letter_ids:
-                    raise UserError('You cannot approve without creating a letter (you are the only/last approver), consider creating a letter first.')
-            else:
-                approvers = self.approver_ids.filtered(lambda a: a.status == 'pending')
-                if approvers and len(approvers) <= 1 and not self.letter_ids:
-                    raise UserError('You cannot approve without creating a letter (you are the only/last approver), consider creating a letter first.')
-
         self.ensure_one()
-        super().action_approve()
+
+        # Only enforce the "letter must exist before final approval" rule for the Letter Approval category
+        if self.category_id.name == 'Letter Approval':
+            # --- Sequenced approvals (one-by-one) ---
+            if self.approver_sequence:
+                # If there are NO approvers in 'waiting' state then this approver is the last in sequence.
+                # In that case a letter must already exist (otherwise we block).
+                waiting = self.approver_ids.filtered(lambda a: a.status == 'waiting')
+                if not waiting and not self.letter_ids:
+                    raise UserError(
+                        'You cannot approve without creating a letter (you are the last approver). '
+                        'Please create a letter first.'
+                    )
+
+            # --- Parallel approvals (not sequenced) ---
+            else:
+                pending_approvers = self.approver_ids.filtered(lambda a: a.status == 'pending')
+                if pending_approvers and len(pending_approvers) <= 1 and not self.letter_ids:
+                    raise UserError(
+                        'You cannot approve as you are the last/only approver left. '
+                        'Please attach/create the letter first.'
+                    )
+
+        # perform the actual approval (call the parent implementation)
+        res = super().action_approve(approver=approver)
+
+        # keep linked letters in sync with request state
         self._sync_letter_status()
+
+        return res
 
     def action_refuse(self, approver=None):
         self.ensure_one()
