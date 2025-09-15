@@ -13,7 +13,7 @@
                     <field name="request_owner_name" string="Request Owner"/>
                     <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
                 </xpath>
-                <xpath expr="//button[@name='print_letter']" position="attributes">
+                <xpath expr="//list/button[@name='print_letter']" position="attributes">
                     <attribute name="invisible">
                         status == 'draft' or status == 'rejected'
                     </attribute>
