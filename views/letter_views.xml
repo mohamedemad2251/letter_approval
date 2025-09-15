@@ -11,26 +11,12 @@
                 <xpath expr="//field[@name='template_module']" position="after">
                     <field name="approval_request_id" string="Approval Request"/>
                     <field name="request_owner_name" string="Request Owner"/>
-                    <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
+                    <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'pending'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
                 </xpath>
-<!--                <xpath expr="//list" position="replace">-->
-<!--                    <list>-->
-<!--                        <field name="letter_name"/>-->
-<!--                        <field name="template_id"/>-->
-<!--                        <field name="template_module" widget="badge" decoration-danger="template_module == 'base'" decoration-primary="template_module == 'hr'"/>-->
-<!--                        <field name="create_date" string="Creation Date"/>-->
-<!--                        <button string="Download (PDF)"-->
-<!--                                type="object"-->
-<!--                                name="print_letter"-->
-<!--                                class="oe_stat_button oe_inline oe_right"-->
-<!--                                icon="fa-download"-->
-<!--                                invisible=" status == 'draft' or status == 'rejected' "/>-->
-<!--                    </list>-->
-<!--                </xpath>-->
 
                 <xpath expr="//button[@name='print_letter']" position="attributes">
                     <attribute name="invisible">
-                        status == 'draft' or status == 'rejected'
+                        status == 'draft' or status == 'pending' or status == 'rejected'
                     </attribute>
                 </xpath>
 
@@ -45,6 +31,11 @@
             <field name="model">letter.letter</field>
             <field name="inherit_id" ref="letter_writer.letter_letter_form_view"/>
             <field name="arch" type="xml">
+                <xpath expr="//form" position="attributes">
+                    <attribute name="readonly">
+                        status != 'draft'
+                    </attribute>
+                </xpath>
                 
                 <xpath expr="//button[@name='print_letter']" position="before">
                     <button name="submit_action" type="object" string="Submit" class="oe_highlight" invisible="status == 'issued' or status == 'downloaded' or status == 'rejected' or can_submit != True"/>
@@ -54,14 +45,14 @@
                 <xpath expr="//button[@name='print_letter']" position="attributes">
                     <attribute name="class">oe_highlight</attribute>
                     <attribute name="invisible">
-                        status == 'draft' or status == 'rejected'
+                        status == 'draft' or status == 'pending' or status == 'rejected'
                     </attribute>
 
                 </xpath>
                 <xpath expr="//button[@name='save_letter_docx']" position="attributes">
                     <attribute name="class">oe_highlight</attribute>
                     <attribute name="invisible">
-                        status == 'draft' or status == 'rejected'
+                        status == 'draft' or status == 'pending' or status == 'rejected'
                     </attribute>
                 </xpath>
                 <xpath expr="//button[@name='save_letter_docx']" position="after">
@@ -71,7 +62,7 @@
                 <!-- Statusbar -->
                 <xpath expr="//header" position="inside">
                     <field name="status" widget="statusbar"
-                           statusbar_visible="draft,issued,downloaded,rejected"/>
+                           statusbar_visible="draft,pending,issued,downloaded,rejected"/>
                 </xpath>
 
                 

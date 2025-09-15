@@ -32,9 +32,9 @@
                                 <field name="letter_name"/>
                                 <field name="template_id"/>
                                 <field name="template_module" widget="badge" decoration-primary="template_module == 'hr'"/>
-                                <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
+                                <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'pending'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
                                 <field name="create_date"/>
-                                <button string="Download (PDF)" type="object" name="print_letter" class="oe_stat_button oe_inline oe_right" icon="fa-download" invisible="status == 'draft' or status == 'rejected'"/>
+                                <button string="Download (PDF)" type="object" name="print_letter" class="oe_stat_button oe_inline oe_right" icon="fa-download" invisible="status == 'draft' or status == 'pending' or status == 'rejected'"/>
                             </list>
                         </field>
                     </page>
