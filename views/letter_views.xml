@@ -24,7 +24,7 @@
                                 name="print_letter"
                                 class="oe_stat_button oe_inline oe_right"
                                 icon="fa-download"
-                                attrs="{'invisible': [('status', 'in', ['draft', 'rejected'])]}"/>
+                                invisible=" status == 'draft' or status == 'rejected' "/>
                     </list>
                 </xpath>
 
