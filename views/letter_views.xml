@@ -28,10 +28,13 @@
 <!--                    </list>-->
 <!--                </xpath>-->
 
-                <xpath expr="//button[@name='print_letter']" position="attributes">
-                    <attribute name="invisible">
-                        status == 'draft' or status == 'rejected'
-                    </attribute>
+                <xpath expr="//field[@name='create_date']" position="after">
+                    <button string="Download (PDF)"
+                                type="object"
+                                name="print_letter"
+                                class="oe_stat_button oe_inline oe_right"
+                                icon="fa-download"
+                                invisible=" status == 'draft' or status == 'rejected' "/>
                 </xpath>
 
 
