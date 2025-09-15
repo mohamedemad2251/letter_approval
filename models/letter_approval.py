@@ -26,6 +26,28 @@ class ApprovalRequest(models.Model):
 
     letter_ids = fields.One2many('letter.letter','approval_request_id')
 
+    def action_create_letter_and_approve(self):
+        self.ensure_one()
+
+        # Create the letter with default values
+        letter = self.env['letter.letter'].create({
+            'letter_name': self.name or "Approval Letter",
+            'approval_request_id': self.id,
+            'request_owner_name': self.request_owner_id.name if self.request_owner_id else '',
+        })
+
+        # Mark request as approved (reuse existing method if possible)
+        self.action_approve()
+
+        # Open the letter in form view
+        return {
+            'name': 'Letter',
+            'type': 'ir.actions.act_window',
+            'res_model': 'letter.letter',
+            'view_mode': 'form',
+            'res_id': letter.id,
+            'target': 'current',
+        }
 
 
 # LETTER LETTER OVERRIDE (Modular)
@@ -49,6 +71,9 @@ class LetterLetter(models.Model):
     approval_request_id = fields.Many2one('approval.request',string="Approval Request", copy=False)
     request_owner_name= fields.Char(related='approval_request_id.request_owner_id.name')
     can_submit = fields.Boolean(compute='_compute_can_submit')
+
+    # REMOVE THIS LATER:
+    template_id = fields.Many2one('letter.template', string="Template", required=False)
 
     _sql_constraints = [
         ('unique_approval_request_letter',

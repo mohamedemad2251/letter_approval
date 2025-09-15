@@ -39,6 +39,11 @@
                         </field>
                     </page>
                 </xpath>
+<!--                Create & Approve Button-->
+                <xpath expr="//button[@name='action_approve']" position="after">
+                    <button name="action_create_letter_and_approve" string="Create Letter &amp; Approve" type="object" invisible="(attachment_number &lt; 1 and request_owner_id == uid) or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
+                    <button name="action_create_letter_and_approve" string="Create Letter &amp; Approve" type="object" invisible="attachment_number &gt;= 1 or request_owner_id != uid or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
+                </xpath>
             </field>
         </record>
 
