@@ -17,7 +17,7 @@
                     <list>
                         <field name="letter_name"/>
                         <field name="template_id"/>
-                        <field name="template_module" widget="badge" decoration-danger="template_module == 'base'"/>
+                        <field name="template_module" widget="badge" decoration-danger="template_module == 'base'" decoration-primary="template_module == 'hr'"/>
                         <field name="create_date" string="Creation Date"/>
                         <button string="Download (PDF)"
                                 type="object"
