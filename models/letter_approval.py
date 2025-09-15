@@ -24,7 +24,59 @@ class ApprovalRequest(models.Model):
     addressed_to = fields.Text(string="Addressed To")
     special_content = fields.Text(string="Special Content")
 
-    letter_ids = fields.One2many('letter.letter','approval_request_id')
+    letter_ids = fields.One2many('letter.letter', 'approval_request_id')
+
+    # -------------------------------
+    # HELPER: sync request + letter state
+    # -------------------------------
+    def _sync_letter_status(self):
+        """Keep letters in sync with request status."""
+        for request in self:
+            if not request.letter_ids:
+                continue
+
+            if request.request_status == 'approved':
+                request.letter_ids.status = 'issued'
+            elif request.request_status == 'refused':
+                request.letter_ids.status = 'rejected'
+            elif request.request_status == 'cancel':
+                request.letter_ids.status = 'draft'
+            elif request.request_status == 'new':
+                request.letter_ids.status = 'draft'
+            elif request.request_status == 'pending':
+                # only set pending if at least one approver is still processing
+                request.letter_ids.status = 'pending'
+
+    # -------------------------------
+    # ACTIONS
+    # -------------------------------
+    def action_approve(self, approver=None):
+        if self.category_id.name == 'Letter Approval':
+            if self.approver_sequence:
+                last_approver = self.approver_ids.filtered(lambda a: a.status == 'waiting')
+                if not last_approver and not self.letter_ids:
+                    raise UserError('You cannot approve without creating a letter (you are the only/last approver), consider creating a letter first.')
+            else:
+                approvers = self.approver_ids.filtered(lambda a: a.status == 'pending')
+                if approvers and len(approvers) > 1 and not self.letter_ids:
+                    raise UserError('You cannot approve without creating a letter (you are the only/last approver), consider creating a letter first.')
+
+        self.ensure_one()
+        super().action_approve()
+        self._sync_letter_status()
+
+    def action_refuse(self, approver=None):
+        self.ensure_one()
+        super().action_refuse()
+        self._sync_letter_status()
+
+    def action_withdraw(self, approver=None):
+        self.ensure_one()
+        super().action_withdraw()
+        # When withdrawn, safest is to send back to draft so user can re-issue
+        if self.letter_ids:
+            # self.letter_ids.status = 'draft'
+            self._sync_letter_status()
 
     def action_create_letter_and_approve(self):
         self.ensure_one()
@@ -36,8 +88,11 @@ class ApprovalRequest(models.Model):
             'request_owner_name': self.request_owner_id.name if self.request_owner_id else '',
         })
 
-        # Mark request as approved (reuse existing method if possible)
-        self.action_approve()
+        # Immediately approve using parent logic
+        super().action_approve()
+
+        # Sync letter after approval
+        self._sync_letter_status()
 
         # Open the letter in form view
         return {
@@ -58,6 +113,7 @@ class LetterLetter(models.Model):
     #                           string="Status", default='draft')
     status = fields.Selection([
         ('draft', 'Draft'),
+        ('pending','Pending'),
         ('issued', 'Issued'),
         ('downloaded', 'Downloaded'),
         ('rejected','Rejected')],
@@ -110,6 +166,7 @@ class LetterLetter(models.Model):
         current_approver = self.approval_request_id.approver_ids.filtered(lambda a: a.status == 'pending')
         if user_approver.status == 'pending':
             user_approver.action_approve()
+            self.status = 'pending'
         elif user_approver.status == 'waiting':
             raise UserError(f'You cannot approve before the previous approver. Current approver: {current_approver.user_id.name}')
         if self.approval_request_id.request_status == 'approved':
@@ -184,7 +241,10 @@ class LetterResetWizard(models.TransientModel):
         self.letter_id.approval_request_id.action_draft()
         self.letter_id.status = 'draft'
         self.letter_id.approval_request_id = None
-        return {'type': 'ir.actions.act_window_close'}
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'reload',
+        }
 
     def action_cancel(self):
         """User clicked No"""
