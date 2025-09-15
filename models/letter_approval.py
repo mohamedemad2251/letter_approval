@@ -52,7 +52,7 @@ class ApprovalRequest(models.Model):
     # -------------------------------
     def action_approve(self, approver=None):
         if self.category_id.name == 'Letter Approval':
-            if self.approver_sequence:
+            if self.approval_minimum > 1:
                 last_approver = self.approver_ids.filtered(lambda a: a.status == 'waiting')
                 if not last_approver and not self.letter_ids:
                     raise UserError('You cannot approve without creating a letter (you are the only/last approver), consider creating a letter first.')
