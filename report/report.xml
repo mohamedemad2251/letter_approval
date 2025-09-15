@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <record id="letter_writer.letter_html_report" model="ir.actions.report">  <!-- The report action used in the python method. -->
+        <field name="binding_type">action</field>
+    </record>
+</odoo>

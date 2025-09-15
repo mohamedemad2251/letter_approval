@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    
+    <data>
+
+        <record id="letter_letter_list_view_extension" model="ir.ui.view">
+            <field name="name">letter.letter.list.view.extension</field>
+            <field name="model">letter.letter</field>
+            <field name="inherit_id" ref="letter_writer.letter_letter_list_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='template_module']" position="after">
+                    <field name="approval_request_id" string="Approval Request"/>
+                    <field name="request_owner_name" string="Request Owner"/>
+                    <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
+                </xpath>
+                <xpath expr="//button[@name='print_letter']" position="attributes">
+                    <attribute name="invisible">
+                        status == 'draft' or status == 'rejected'
+                    </attribute>
+                </xpath>
+
+            </field>
+        </record>
+        
+        <record id="letter_letter_form_view_extension" model="ir.ui.view">
+            
+            <field name="name">letter.letter.form.view.extension</field>
+            <field name="model">letter.letter</field>
+            <field name="inherit_id" ref="letter_writer.letter_letter_form_view"/>
+            <field name="arch" type="xml">
+                
+                <xpath expr="//button[@name='print_letter']" position="before">
+                    <button name="submit_action" type="object" string="Submit" class="oe_highlight" invisible="status == 'issued' or status == 'downloaded' or status == 'rejected' or can_submit != True"/>
+                    <button name="reject_action" type="object" string="Reject" invisible="status != 'draft' or can_submit != True"/>
+                </xpath>
+
+                <xpath expr="//button[@name='print_letter']" position="attributes">
+                    <attribute name="class">oe_highlight</attribute>
+                    <attribute name="invisible">
+                        status == 'draft' or status == 'rejected'
+                    </attribute>
+
+                </xpath>
+                <xpath expr="//button[@name='save_letter_docx']" position="attributes">
+                    <attribute name="class">oe_highlight</attribute>
+                    <attribute name="invisible">
+                        status == 'draft' or status == 'rejected'
+                    </attribute>
+                </xpath>
+                <xpath expr="//button[@name='save_letter_docx']" position="after">
+                    <button name="reset_to_draft" type="object" string="Reset to draft" invisible="status == 'draft' "/>
+                </xpath>
+
+                <!-- Statusbar -->
+                <xpath expr="//header" position="after">
+                    <field name="status" widget="statusbar"
+                           statusbar_visible="draft,issued,downloaded,rejected"/>
+                </xpath>
+
+                
+                <xpath expr="//group[@name='optional-fields-1']" position="inside">
+<!--                    This is a tricky field, ensure the user is one of the approvers, the status of request is pending AND it doesn't have a letter already-->
+                    <field name="approval_request_id" required="True" domain="[('approver_ids.user_id','=',uid),('request_status','=','pending'),('letter_ids','=',False)]" options="{'no_create': True, 'no_create_edit': True}"/>
+                </xpath>
+<!--                <xpath expr="//group[@name='optional-fields-2']" position="inside">-->
+<!--                </xpath>-->
+            </field>
+        </record>
+        
+    </data>
+    
+</odoo>

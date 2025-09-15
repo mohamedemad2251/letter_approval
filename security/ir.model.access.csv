@@ -1,1 +1,10 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_letter_template_user,letter.template.user,letter_writer.model_letter_template,base.group_user,0,0,0,0
+access_letter_template_approver,letter.template.approver,letter_writer.model_letter_template,approvals.group_approval_user,1,1,1,1
+access_letter_template_manager,letter.template.manager,letter_writer.model_letter_template,approvals.group_approval_manager,1,1,1,1
+access_letter_letter_user,letter.letter.user,letter_writer.model_letter_letter,base.group_user,1,0,0,0
+access_letter_letter_approver,letter.letter.approver,letter_writer.model_letter_letter,approvals.group_approval_user,1,1,1,1
+access_letter_letter_manager,letter.letter.manager,letter_writer.model_letter_letter,approvals.group_approval_manager,1,1,1,1
+access_letter_reset_wizard_user,letter.reset.wizard.user,letter_approval.model_letter_reset_wizard,base.group_user,0,0,0,0
+access_letter_reset_wizard_approver,letter.reset.wizard.approver,letter_approval.model_letter_reset_wizard,approvals.group_approval_user,1,1,1,1
+access_letter_reset_wizard_manager,letter.reset.wizard.manager,letter_approval.model_letter_reset_wizard,approvals.group_approval_manager,1,1,1,1

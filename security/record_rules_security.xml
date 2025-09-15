@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="letter_approval_user_see_own" model="ir.rule">
+            <field name="name">letter.approval.user.see.own</field>
+            <field name="model_id" ref="letter_writer.model_letter_letter"/>
+            <field name="groups" eval="[(4,ref('base.group_user'))]"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">0</field>
+            <field name="perm_create">0</field>
+            <field name="perm_unlink">0</field>
+            <field name="domain_force">[('approval_request_id.request_owner_id','=',user.id),('status','in',['issued','downloaded','rejected'])]</field>
+        </record>
+
+<!--        The Letter Is Owned By The Approver-->
+        <record id="letter_approval_approver_change_own" model="ir.rule">
+            <field name="name">letter.approval.approver.change.own</field>
+            <field name="model_id" ref="letter_writer.model_letter_letter"/>
+            <field name="groups" eval="[(4,ref('approvals.group_approval_user'))]"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+<!--            No need to check on each record in the recordset of approver_ids.user_id, it's automatically checked via Odoo's ORM-->
+            <field name="domain_force">[('approval_request_id.approver_ids.user_id','=',user.id),('create_uid','=',user.id)]</field>
+        </record>
+
+<!--        The Letter Is Not Owned By The Approver (i.e. Owned By Another Like A Manager)-->
+        <record id="letter_approval_approver_change_manager" model="ir.rule">
+            <field name="name">letter.approval.approver.change.manager</field>
+            <field name="model_id" ref="letter_writer.model_letter_letter"/>
+            <field name="groups" eval="[(4,ref('approvals.group_approval_user'))]"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">0</field>
+            <field name="perm_unlink">0</field>
+            <field name="domain_force">[('approval_request_id.approver_ids.user_id','=',user.id),('create_uid','!=',user.id)]</field>
+        </record>
+
+<!--        For Approval Managers-->
+        <record id="letter_approval_manager" model="ir.rule">
+            <field name="name">letter.approval.approver.manager</field>
+            <field name="model_id" ref="letter_writer.model_letter_letter"/>
+            <field name="groups" eval="[(4,ref('approvals.group_approval_manager'))]"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+            <field name="domain_force">[('approval_request_id.request_owner_id','!=',user.id)]</field>
+        </record>
+
+    </data>
+</odoo>
