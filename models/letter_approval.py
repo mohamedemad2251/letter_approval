@@ -34,7 +34,6 @@ class ApprovalRequest(models.Model):
         for request in self:
             if not request.letter_ids:
                 continue
-
             if request.request_status == 'approved':
                 request.letter_ids.status = 'issued'
             elif request.request_status == 'refused':
@@ -93,7 +92,11 @@ class ApprovalRequest(models.Model):
         super().action_withdraw()
         # When withdrawn, safest is to send back to draft so user can re-issue
         if self.letter_ids:
-            # self.letter_ids.status = 'draft'
+            approvers = self.approver_ids.filtered(lambda a: a.status == 'pending')
+            if len(approvers) == self.approval_minimum:
+                self.letter_ids.status = 'draft'
+            else:
+                self.letter_ids.status = 'pending'
             self._sync_letter_status()
 
     def action_create_letter_and_approve(self):
