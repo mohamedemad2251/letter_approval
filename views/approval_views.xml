@@ -21,6 +21,13 @@
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='request_details']" position="inside">
                     <field name="addressed_to" invisible="is_addressed_to == 'no'" required="is_addressed_to == 'required'"/>
+                     <field name="template_select"
+                            invisible="request_owner_id != uid"
+                            required="True"
+                            groups="base.group_user"/>
+                    <field name="template_id"
+                            required="True"
+                            groups="approvals.group_approval_user,approvals.group_approval_manager"/>
                 </xpath>
                 <xpath expr="//page[@name='approvers']" position="after">
                     <page name="special_content" string="Special Content">

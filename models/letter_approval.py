@@ -26,6 +26,38 @@ class ApprovalRequest(models.Model):
 
     letter_ids = fields.One2many('letter.letter', 'approval_request_id')
 
+    # -----------------------------------------------
+    # Choose Template Type But With Restricted Access
+    # -----------------------------------------------
+    template_id = fields.Many2one('letter.template',string='Letter Type')
+
+    template_select = fields.Selection(selection=lambda self: self._get_template_selection(),
+                                       string="Letter Type",
+                                        # store=True,
+                                        required=True,
+                                       compute='_compute_template_select',
+                                       inverse='_inverse_template_select',
+                                       groups="base.group_user" )
+    @api.depends('template_id')
+    def _compute_template_select(self):
+        for record in self:
+            record.template_select = record.template_id.id if record.template_id else False
+
+    def _inverse_template_select(self):
+        for record in self:
+            record.template_id = record.template_select
+
+    @api.model
+    def _get_template_selection(self):
+        templates = self.env['letter.template'].sudo().search([])
+        return [(t.id,t.template_name) for t in templates]
+
+    @api.model
+    def create(self, vals):
+        if vals.get('template_select') and not vals.get('template_id'):
+            vals['template_id'] = vals['template_select']
+        return super().create(vals)
+
     # -------------------------------
     # HELPER: sync request + letter state
     # -------------------------------
@@ -107,6 +139,8 @@ class ApprovalRequest(models.Model):
             'letter_name': self.name or "Approval Letter",
             'approval_request_id': self.id,
             'request_owner_name': self.request_owner_id.name if self.request_owner_id else '',
+            'template_id': self.template_id.id if self.template_id else None,
+            'employee_id': self.request_owner_id.employee_id.id if self.template_id and self.request_owner_id.employee_id else None,
         })
 
         # Immediately approve using parent logic
@@ -152,15 +186,27 @@ class LetterLetter(models.Model):
     # REMOVE THIS LATER:
     template_id = fields.Many2one('letter.template', string="Template", required=False)
 
-
-
-    addressed_to = fields.Text(related='approval_request_id.addressed_to',string="Addressed To")
+    addressed_to = fields.Text(related='approval_request_id.addressed_to')
 
     _sql_constraints = [
         ('unique_approval_request_letter',
          'UNIQUE(approval_request_id)',
          'Each approval request can only be linked to one letter.'),
     ]
+
+    @api.onchange('approval_request_id')
+    def _compute_employee(self):
+        self.ensure_one()
+        if self.approval_request_id:
+            self.employee_id = self.approval_request_id.request_owner_id.employee_id.id if self.approval_request_id.request_owner_id.employee_id else None
+
+    @api.depends('addressed_to')
+    def _compute_replaced_content(self):
+        super()._compute_replaced_content()
+        self.ensure_one()
+        if self.approval_request_id and self.template_id.template_module == 'hr':
+            if self.replaced_content:
+                self.replaced_content = self.replaced_content.replace('*Addressed To*',self.addressed_to) if self.addressed_to else 'N/A'
 
     def reject_action(self):
         for record in self:
