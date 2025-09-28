@@ -9,6 +9,7 @@
         'security/override_security.xml',
         'security/ir.model.access.csv',
         'security/record_rules_security.xml',
+        'data/letter_placeholders_approval.xml',
         'report/report.xml',
         'views/confirmation_wizard_view.xml',
         'views/letter_views.xml',

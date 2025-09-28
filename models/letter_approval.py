@@ -152,6 +152,10 @@ class LetterLetter(models.Model):
     # REMOVE THIS LATER:
     template_id = fields.Many2one('letter.template', string="Template", required=False)
 
+
+
+    addressed_to = fields.Text(related='approval_request_id.addressed_to',string="Addressed To")
+
     _sql_constraints = [
         ('unique_approval_request_letter',
          'UNIQUE(approval_request_id)',
