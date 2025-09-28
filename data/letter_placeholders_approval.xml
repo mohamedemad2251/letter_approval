@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+
+    <data>
+
+        <record model="letter.placeholders" id="placeholder_addressed_to">
+            <field name="name">Addressed To</field>
+            <field name="code">*Addressed To*</field>
+            <field name="module">hr</field>
+        </record>
+
+    </data>
+
+</odoo>
