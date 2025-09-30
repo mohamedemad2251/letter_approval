@@ -182,6 +182,7 @@ class LetterLetter(models.Model):
     approval_request_id = fields.Many2one('approval.request',string="Approval Request", copy=False)
     request_owner_name= fields.Char(related='approval_request_id.request_owner_id.name')
     can_submit = fields.Boolean(compute='_compute_can_submit')
+    can_download = fields.Boolean(compute='_compute_can_download',store=False)
 
     # REMOVE THIS LATER:
     template_id = fields.Many2one('letter.template', string="Template", required=False)
@@ -261,6 +262,26 @@ class LetterLetter(models.Model):
                 record.can_submit = True
             else:
                 record.can_submit = False
+
+    @api.depends('status', 'delivery_method', 'approval_request_id')
+    def _compute_can_download(self):
+        user = self.env.user
+        for record in self:
+            record.can_download = False  # default to hidden
+
+            # No approval request? never downloadable
+            if not record.approval_request_id:
+                continue
+
+            owner_user = record.approval_request_id.request_owner_id if record.approval_request_id.request_owner_id else None
+            # Request owner: can download only digital letters and when issued/downloaded
+            if owner_user == user:
+                if record.status in ('issued', 'downloaded') and record.delivery_method == 'digital':
+                    record.can_download = True
+            else:
+                # HR/Manager approvers: can download if status is issued/downloaded
+                if record.status in ('issued', 'downloaded'):
+                    record.can_download = True
 
     def reset_to_draft(self):
         self.ensure_one()

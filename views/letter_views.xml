@@ -42,21 +42,19 @@
                     <button name="reject_action" type="object" string="Reject" invisible="status != 'draft' or can_submit != True"/>
                 </xpath>
 
-                <xpath expr="//button[@name='print_letter']" position="attributes">
-                    <attribute name="class">oe_highlight</attribute>
-                    <attribute name="invisible">
-                        status == 'draft' or status == 'pending' or status == 'rejected'
-                    </attribute>
 
-                </xpath>
-                <xpath expr="//button[@name='save_letter_docx']" position="attributes">
-                    <attribute name="class">oe_highlight</attribute>
+                <xpath expr="//button[@name='print_letter']" position="attributes">
                     <attribute name="invisible">
-                        status == 'draft' or status == 'pending' or status == 'rejected'
+                        not can_download
                     </attribute>
+                    <attribute name="class">oe_highlight</attribute>
                 </xpath>
-                <xpath expr="//button[@name='save_letter_docx']" position="after">
-                    <button name="reset_to_draft" type="object" string="Reset to draft" invisible="status == 'draft' "/>
+
+                <xpath expr="//button[@name='save_letter_docx']" position="attributes">
+                   <attribute name="invisible">
+                        not can_download
+                    </attribute>
+                    <attribute name="class">oe_highlight</attribute>
                 </xpath>
 
                 <!-- Statusbar -->
