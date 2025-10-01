@@ -141,6 +141,7 @@ class ApprovalRequest(models.Model):
             'request_owner_name': self.request_owner_id.name if self.request_owner_id else '',
             'template_id': self.template_id.id if self.template_id else None,
             'employee_id': self.request_owner_id.employee_id.id if self.template_id and self.request_owner_id.employee_id else None,
+            'delivery_method' : 'digital',      #Default
         })
 
         # Immediately approve using parent logic

@@ -6,7 +6,6 @@
     'version' : '1.0',
     'author' : 'Mohamed Emad',
     'data' : [
-        'security/override_security.xml',
         'security/ir.model.access.csv',
         'security/record_rules_security.xml',
         'data/letter_placeholders_approval.xml',
