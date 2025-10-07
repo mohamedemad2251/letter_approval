@@ -3,16 +3,16 @@
 
     <data>
 
-            <record id="approval_category_view_form_extension" model="ir.ui.view">
-                <field name="name">approval.category.view.form.extension</field>
-                <field name="model">approval.category</field>
-                <field name="inherit_id" ref="approvals.approval_category_view_form"/>
-                <field name="arch" type="xml">
-                    <xpath expr="//group[@name='option_settings']" position="inside">
-                        <field name="is_addressed_to" string="Addressed To" widget="radio" options="{'horizontal': true}" invisible="name != 'Letter Approval'"/>
-                    </xpath>
-                </field>
-            </record>
+        <record id="approval_category_view_form_extension" model="ir.ui.view">
+            <field name="name">approval.category.view.form.extension</field>
+            <field name="model">approval.category</field>
+            <field name="inherit_id" ref="approvals.approval_category_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='option_settings']" position="inside">
+                    <field name="is_addressed_to" string="Addressed To" widget="radio" options="{'horizontal': true}" invisible="name != 'Letter Approval'"/>
+                </xpath>
+            </field>
+        </record>
 
         <record id="approval_request_view_form_extension" model="ir.ui.view">
             <field name="name">approval.request.view.form.extension</field>
@@ -35,22 +35,32 @@
                         <field name="special_content"/>
                     </page>
                     <page name="linked_letters" string="Linked Letters">
-                        <field name="letter_ids" readonly="1">
+                        <field name="letter_ids" readonly="1" groups="approvals.group_approval_user,approvals.group_approval_manager" invisible="is_request_owner">
                             <list>
                                 <field name="letter_name"/>
                                 <field name="template_id"/>
                                 <field name="template_module" widget="badge" decoration-primary="template_module == 'hr'"/>
                                 <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'pending'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
                                 <field name="create_date"/>
-                                <button string="Download (PDF)" type="object" name="print_letter" class="oe_stat_button oe_inline oe_right" icon="fa-download" invisible="status == 'draft' or status == 'pending' or status == 'rejected'"/>
+                                <button string="Download (PDF)" type="object" name="print_letter" class="oe_stat_button oe_inline oe_right" icon="fa-download" invisible="not can_download"/>
+                            </list>
+                        </field>
+                        <field name="digital_letter_ids" readonly="1" groups="base.group_user" invisible="not is_request_owner">
+                            <list>
+                                <field name="letter_name"/>
+                                <field name="template_id"/>
+                                <field name="template_module" widget="badge" decoration-primary="template_module == 'hr'"/>
+                                <field name="status" widget="badge" decoration-warning="status == 'draft'" decoration-info="status == 'pending'" decoration-success="status == 'issued' or status == 'downloaded'" decoration-danger="status == 'rejected'"/>
+                                <field name="create_date"/>
+                                <button string="Download (PDF)" type="object" name="print_letter" class="oe_stat_button oe_inline oe_right" icon="fa-download" invisible="not can_download"/>
                             </list>
                         </field>
                     </page>
                 </xpath>
 <!--                Create & Approve Button-->
                 <xpath expr="//button[@name='action_approve']" position="after">
-                    <button name="action_create_letter_and_approve" string="Create Letter &amp; Approve" type="object" invisible="(attachment_number &lt; 1 and request_owner_id == uid) or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
-                    <button name="action_create_letter_and_approve" string="Create Letter &amp; Approve" type="object" invisible="attachment_number &gt;= 1 or request_owner_id != uid or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
+                    <button name="action_create_letter_and_approve" string="Create Letter &amp; Approve" type="object" invisible="(attachment_number &lt; 1 and is_request_owner) or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
+                    <button name="action_create_letter_and_approve" string="Create Letter &amp; Approve" type="object" invisible="attachment_number &gt;= 1 or not is_request_owner or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
                 </xpath>
             </field>
         </record>

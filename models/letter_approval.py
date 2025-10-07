@@ -27,6 +27,29 @@ class ApprovalRequest(models.Model):
     letter_ids = fields.One2many('letter.letter', 'approval_request_id')
 
     # -----------------------------------------------
+    # Restrict Access For Digital & Physical Letters
+    # -----------------------------------------------
+    # Used to get only digital letters to show for the normal users
+    digital_letter_ids = fields.One2many(
+        'letter.letter',
+        compute='_compute_digital_letters',
+        string="Digital Letters",
+        store=False,
+    )
+
+    is_request_owner = fields.Boolean(compute='_compute_is_request_owner',store=False)
+
+    @api.depends('letter_ids')
+    def _compute_digital_letters(self):
+        for record in self:
+            record.digital_letter_ids = record.letter_ids.filtered(lambda l: l.delivery_method == 'digital')
+
+    def _compute_is_request_owner(self):
+        for record in self:
+            if record.request_owner_id:
+                record.is_request_owner = record.request_owner_id.id == record.env.user.id
+
+    # -----------------------------------------------
     # Choose Template Type But With Restricted Access
     # -----------------------------------------------
     template_id = fields.Many2one('letter.template',string='Letter Type')
