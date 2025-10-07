@@ -223,7 +223,11 @@ class LetterLetter(models.Model):
     def _compute_employee(self):
         self.ensure_one()
         if self.approval_request_id:
-            self.employee_id = self.approval_request_id.request_owner_id.employee_id.id if self.approval_request_id.request_owner_id.employee_id else None
+            self.template_id = self.approval_request_id.template_id if self.approval_request_id.template_id else None
+            if self.template_id and self.template_id.template_module == 'hr':
+                self.employee_id = self.approval_request_id.request_owner_id.employee_id.id if self.approval_request_id.request_owner_id.employee_id else None
+            else:
+                self.employee_id = None
 
     @api.depends('addressed_to')
     def _compute_replaced_content(self):
