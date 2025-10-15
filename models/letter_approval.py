@@ -73,7 +73,8 @@ class ApprovalRequest(models.Model):
     @api.model
     def _get_template_selection(self):
         templates = self.env['letter.template'].sudo().search([])
-        return [(t.id,t.template_name) for t in templates]
+        # Use _rec_name to get whatever name/field you're using to show the records
+        return [(t.id,t._rec_name) for t in templates]
 
     @api.model
     def create(self, vals):
