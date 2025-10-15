@@ -54,7 +54,7 @@ class ApprovalRequest(models.Model):
     # -----------------------------------------------
     template_id = fields.Many2one('letter.template',string='Letter Type')
 
-    template_select = fields.Selection(selection=lambda self: self._get_template_selection(),
+    template_select = fields.Selection(selection='_get_template_selection',
                                        string="Letter Type",
                                         # store=True,
                                         required=True,
@@ -68,15 +68,28 @@ class ApprovalRequest(models.Model):
 
     def _inverse_template_select(self):
         for record in self:
-            record.template_id = record.template_select
+            # raise UserError(record.template_select)
+            record.template_id = self.env['letter.template'].browse(record.template_select)
+            # record.template_id = record.template_select
 
     @api.model
     def _get_template_selection(self):
-        templates = self.env['letter.template'].sudo().search([])
-        return [(t.id,t.template_name) for t in templates]
+        try:
+            templates = self.env['letter.template'].sudo().search([])
+            return [(t.id, t.template_name) for t in templates] or []
+        except Exception as e:
+            return []
 
     @api.model
     def create(self, vals):
+        # If multiple records are created at once, handle each one
+        if isinstance(vals, list):
+            for val in vals:
+                if val.get('template_select') and not val.get('template_id'):
+                    val['template_id'] = val['template_select']
+            return super().create(vals)
+
+        # Single record
         if vals.get('template_select') and not vals.get('template_id'):
             vals['template_id'] = vals['template_select']
         return super().create(vals)
@@ -213,11 +226,10 @@ class LetterLetter(models.Model):
 
     addressed_to = fields.Text(related='approval_request_id.addressed_to')
 
-    _sql_constraints = [
-        ('unique_approval_request_letter',
-         'UNIQUE(approval_request_id)',
-         'Each approval request can only be linked to one letter.'),
-    ]
+    _unique_approval_request_letter = models.Constraint(
+         "UNIQUE(approval_request_id)",
+         "Each approval request can only be linked to one letter.")
+
 
     @api.onchange('approval_request_id')
     def _compute_employee(self):
