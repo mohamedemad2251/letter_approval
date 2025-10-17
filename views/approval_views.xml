@@ -23,7 +23,7 @@
                     <field name="addressed_to" invisible="is_addressed_to == 'no'" required="is_addressed_to == 'required'"/>
 <!--                    TODO: This field also shows even if user is admin/approver-->
                      <field name="template_select"
-                            invisible="request_owner_id != uid"
+                            invisible="request_owner_id != uid or is_approver_manager"
                             required="True"
                             groups="base.group_user"/>
                     <field name="template_id"
@@ -59,8 +59,8 @@
                 </xpath>
 <!--                Create & Approve Button-->
                 <xpath expr="//button[@name='action_approve']" position="after">
-                    <button name="action_create_letter_and_approve" string="Create Letter &amp; Approve" type="object" invisible="(attachment_number &lt; 1 and is_request_owner) or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
-                    <button name="action_create_letter_and_approve" string="Create Letter &amp; Approve" type="object" invisible="attachment_number &gt;= 1 or not is_request_owner or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
+                    <button name="action_create_letter" string="Create Letter" type="object" invisible="(attachment_number &lt; 1 and is_request_owner) or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
+                    <button name="action_create_letter" string="Create Letter" type="object" invisible="attachment_number &gt;= 1 or not is_request_owner or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
                 </xpath>
             </field>
         </record>

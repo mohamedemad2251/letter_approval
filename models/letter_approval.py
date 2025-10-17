@@ -38,6 +38,7 @@ class ApprovalRequest(models.Model):
     )
 
     is_request_owner = fields.Boolean(compute='_compute_is_request_owner',store=False)
+    is_approver_manager = fields.Boolean(compute='_compute_is_approver_manager',store=False)
 
     @api.depends('letter_ids')
     def _compute_digital_letters(self):
@@ -48,6 +49,10 @@ class ApprovalRequest(models.Model):
         for record in self:
             if record.request_owner_id:
                 record.is_request_owner = record.request_owner_id.id == record.env.user.id
+
+    def _compute_is_approver_manager(self):
+        for record in self:
+            record.is_approver_manager = record.env.user.has_group('approvals.group_approval_user') or record.env.user.has_group('approvals.group_approval_manager')
 
     # -----------------------------------------------
     # Choose Template Type But With Restricted Access

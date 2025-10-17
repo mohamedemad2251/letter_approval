@@ -38,8 +38,9 @@
                 </xpath>
                 
                 <xpath expr="//button[@name='print_letter']" position="before">
-                    <button name="submit_action" type="object" string="Submit" class="oe_highlight" invisible="status == 'issued' or status == 'downloaded' or status == 'rejected' or can_submit != True"/>
+                    <button name="submit_action" type="object" string="Submit" class="oe_highlight" invisible="status != 'draft' or can_submit != True"/>
                     <button name="reject_action" type="object" string="Reject" invisible="status != 'draft' or can_submit != True"/>
+                    <button name="reset_to_draft" type="object" string="Reset To Draft" invisible="status != 'pending' "/>
                 </xpath>
 
 
