@@ -378,10 +378,13 @@ class LetterResetWizard(models.TransientModel):
         self = self.sudo()
         self.letter_id.approval_request_id.action_draft()
         self.letter_id.status = 'draft'
-        # self.letter_id.approval_request_id = None
+        self.letter_id.approval_request_id = None
         return {
-            'type': 'ir.actions.client',
-            'tag': 'reload',
+            'type': 'ir.actions.act_window',
+            'name': 'Letters',
+            'res_model': 'letter.letter',
+            'view_mode': 'list,form',
+            'target': 'current',
         }
 
     def action_cancel(self):

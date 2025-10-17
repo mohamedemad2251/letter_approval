@@ -31,14 +31,40 @@
             <field name="model">letter.letter</field>
             <field name="inherit_id" ref="letter_writer.letter_letter_form_view"/>
             <field name="arch" type="xml">
-                <xpath expr="//form" position="attributes">
+                <xpath expr="//field[@name='letter_date']" position="attributes">
                     <attribute name="readonly">
                         status != 'draft'
                     </attribute>
                 </xpath>
-                
+                <xpath expr="//field[@name='company_id']" position="attributes">
+                    <attribute name="readonly">
+                        status != 'draft'
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='employee_id']" position="attributes">
+                    <attribute name="readonly">
+                        status != 'draft'
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='template_id']" position="attributes">
+                    <attribute name="readonly">
+                        status != 'draft'
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='delivery_method']" position="attributes">
+                    <attribute name="readonly">
+                        status != 'draft'
+                    </attribute>
+                </xpath>
+                <xpath expr="//field[@name='employee_contract_id']" position="attributes">
+                    <attribute name="readonly">
+                        status != 'draft'
+                    </attribute>
+                </xpath>
+
+
                 <xpath expr="//button[@name='print_letter']" position="before">
-                    <button name="submit_action" type="object" string="Submit" class="oe_highlight" invisible="status != 'draft' or can_submit != True"/>
+                    <button name="submit_action" type="object" string="Submit" class="oe_highlight" invisible="status == 'issued' or status == 'downloaded' or status == 'rejected' or can_submit != True"/>
                     <button name="reject_action" type="object" string="Reject" invisible="status != 'draft' or can_submit != True"/>
                     <button name="reset_to_draft" type="object" string="Reset To Draft" invisible="status != 'pending' "/>
                 </xpath>
@@ -67,7 +93,7 @@
                 
                 <xpath expr="//group[@name='optional-fields-1']" position="inside">
 <!--                    This is a tricky field, ensure the user is one of the approvers, the status of request is pending AND it doesn't have a letter already-->
-                    <field name="approval_request_id" required="True" domain="[('approver_ids.user_id','=',uid),('request_status','=','pending'),('letter_ids','=',False)]" options="{'no_create': True, 'no_create_edit': True}"/>
+                    <field name="approval_request_id" required="True" domain="[('approver_ids.user_id','=',uid),('request_status','=','pending'),('letter_ids','=',False)]" options="{'no_create': True, 'no_create_edit': True}" readonly="status != 'draft'"/>
                 </xpath>
 <!--                <xpath expr="//group[@name='optional-fields-2']" position="inside">-->
 <!--                </xpath>-->
