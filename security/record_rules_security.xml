@@ -47,7 +47,10 @@
             <field name="perm_write">1</field>
             <field name="perm_create">1</field>
             <field name="perm_unlink">1</field>
-            <field name="domain_force">[('approval_request_id.request_owner_id','!=',user.id)]</field>
+            <field name="domain_force">
+              [('approval_request_id.request_owner_id','!=',user.id),
+               ('approval_request_id.approver_ids.user_id','=',user.id)]
+            </field>
         </record>
 
     </data>

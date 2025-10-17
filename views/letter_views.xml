@@ -72,7 +72,15 @@
 <!--                </xpath>-->
             </field>
         </record>
-        
+
+
+        <record id="letter_writer.letter_writer_templates" model="ir.ui.menu">
+            <field name="group_ids" eval="[(6, 0, [
+                ref('approvals.group_approval_user'),
+                ref('approvals.group_approval_manager')
+            ])]"/>
+        </record>
+
     </data>
-    
+
 </odoo>
