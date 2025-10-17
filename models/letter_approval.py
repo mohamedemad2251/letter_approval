@@ -167,7 +167,7 @@ class ApprovalRequest(models.Model):
                 self.letter_ids.status = 'pending'
             self._sync_letter_status()
 
-    def action_create_letter_and_approve(self):
+    def action_create_letter(self):
         self.ensure_one()
 
         # Create the letter with default values
@@ -180,11 +180,11 @@ class ApprovalRequest(models.Model):
             'delivery_method' : 'digital',      #Default
         })
 
-        # Immediately approve using parent logic
-        super().action_approve()
+        # # Immediately approve using parent logic
+        # super().action_approve()
 
-        # Sync letter after approval
-        self._sync_letter_status()
+        # # Sync letter after approval
+        # self._sync_letter_status()
 
         # Open the letter in form view
         return {
@@ -370,9 +370,10 @@ class LetterResetWizard(models.TransientModel):
     def action_confirm_reset(self):
         """User clicked Yes"""
         self.ensure_one()
+        self = self.sudo()
         self.letter_id.approval_request_id.action_draft()
         self.letter_id.status = 'draft'
-        self.letter_id.approval_request_id = None
+        # self.letter_id.approval_request_id = None
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',
