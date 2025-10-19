@@ -40,6 +40,13 @@ class ApprovalRequest(models.Model):
     is_request_owner = fields.Boolean(compute='_compute_is_request_owner',store=False)
     is_approver_manager = fields.Boolean(compute='_compute_is_approver_manager',store=False)
 
+    is_letter_approval = fields.Boolean(compute='_compute_is_letter_approval',store=False)
+
+    @api.depends('category_id')
+    def _compute_is_letter_approval(self):
+        for record in self:
+            record.is_letter_approval = record.category_id.name and record.category_id.name == "Letter Approval"
+
     @api.depends('letter_ids')
     def _compute_digital_letters(self):
         for record in self:
@@ -151,7 +158,8 @@ class ApprovalRequest(models.Model):
         res = super().action_approve(approver=approver)
 
         # keep linked letters in sync with request state
-        self._sync_letter_status()
+        if self.category_id.name == 'Letter Approval':
+            self._sync_letter_status()
 
         return res
 

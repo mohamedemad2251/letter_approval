@@ -20,21 +20,22 @@
             <field name="inherit_id" ref="approvals.approval_request_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='request_details']" position="inside">
-                    <field name="addressed_to" invisible="is_addressed_to == 'no'" required="is_addressed_to == 'required'"/>
+                    <field name="addressed_to" invisible="not is_letter_approval or is_addressed_to == 'no'" required="is_letter_approval and is_addressed_to == 'required'"/>
 <!--                    TODO: This field also shows even if user is admin/approver-->
                      <field name="template_select"
-                            invisible="request_owner_id != uid or is_approver_manager"
+                            invisible="request_owner_id != uid or is_approver_manager or not is_letter_approval"
                             required="True"
                             groups="base.group_user"/>
                     <field name="template_id"
                             required="True"
+                            invisible="not is_letter_approval"
                             groups="approvals.group_approval_user,approvals.group_approval_manager"/>
                 </xpath>
                 <xpath expr="//page[@name='approvers']" position="after">
-                    <page name="special_content" string="Special Content">
+                    <page name="special_content" string="Special Content" invisible="not is_letter_approval">
                         <field name="special_content"/>
                     </page>
-                    <page name="linked_letters" string="Linked Letters">
+                    <page name="linked_letters" string="Linked Letters" invisible="not is_letter_approval">
                         <field name="letter_ids" readonly="1" groups="approvals.group_approval_user,approvals.group_approval_manager" invisible="is_request_owner">
                             <list>
                                 <field name="letter_name"/>
@@ -59,8 +60,8 @@
                 </xpath>
 <!--                Create & Approve Button-->
                 <xpath expr="//button[@name='action_approve']" position="after">
-                    <button name="action_create_letter" string="Create Letter" type="object" invisible="(attachment_number &lt; 1 and is_request_owner) or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
-                    <button name="action_create_letter" string="Create Letter" type="object" invisible="attachment_number &gt;= 1 or not is_request_owner or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' " class="btn-primary"/>
+                    <button name="action_create_letter" string="Create Letter" type="object" invisible="(attachment_number &lt; 1 and is_request_owner) or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' or not is_letter_approval" class="btn-primary"/>
+                    <button name="action_create_letter" string="Create Letter" type="object" invisible="attachment_number &gt;= 1 or not is_request_owner or request_status in ['approved', 'refused', 'cancel'] or user_status != 'pending' or not is_letter_approval" class="btn-primary"/>
                 </xpath>
             </field>
         </record>
