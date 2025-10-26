@@ -2,11 +2,12 @@
     'name' : 'Letter Writer - Approvals',
     'description' : ''' "Letter Writer's Extension. This module extends HR even further by requiring the Approvals module. Which then adds functionality for Letter Approval which automates Letter Writer even further."
                     ''',
-    'depends' : ['base','letter_writer','letter_hr','approvals'],
+    'depends' : ['base','approvals','letter_writer','letter_hr'],
     'version' : '1.0',
     'author' : 'Mohamed Emad',
     'data' : [
         'security/ir.model.access.csv',
+        'security/group_security.xml',
         'security/record_rules_security.xml',
         'data/letter_placeholders_approval.xml',
         'report/report.xml',

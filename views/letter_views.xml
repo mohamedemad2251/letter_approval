@@ -101,12 +101,18 @@
         </record>
 
 
+        <!-- Hide base Templates menu -->
         <record id="letter_writer.letter_writer_templates" model="ir.ui.menu">
-            <field name="group_ids" eval="[(6, 0, [
-                ref('approvals.group_approval_user'),
-                ref('approvals.group_approval_manager')
-            ])]"/>
+            <field name="active">False</field>
         </record>
+
+        <menuitem id="letter_writer_templates_approvers"
+                  name="Templates"
+                  parent="letter_writer.letter_writer_root"
+                  action="letter_writer.letter_template_action"
+                  groups="approvals.group_approval_user,approvals.group_approval_manager"
+                  sequence="0"/>
+
 
     </data>
 
