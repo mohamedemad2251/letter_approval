@@ -256,11 +256,15 @@ class LetterLetter(models.Model):
 
     @api.depends('addressed_to')
     def _compute_replaced_content(self):
-        super()._compute_replaced_content()
         self.ensure_one()
-        if self.approval_request_id and self.template_id.template_module == 'hr':
-            if self.replaced_content:
-                self.replaced_content = self.replaced_content.replace('*Addressed To*',self.addressed_to) if self.addressed_to else 'N/A'
+        # Call parent implementation (letter_hr or letter.base depending on MRO) - no sudo() on super() call
+        super()._compute_replaced_content()
+        # Use sudo() only when accessing protected template_id field
+        if self.approval_request_id:
+            template = self.sudo().template_id
+            if template and template.template_module == 'hr' and self.replaced_content:
+                addressed_to_text = self.approval_request_id.sudo().addressed_to if self.approval_request_id.addressed_to else 'N/A'
+                self.replaced_content = self.replaced_content.replace('*Addressed To*', addressed_to_text)
 
     def reject_action(self):
         for record in self:
