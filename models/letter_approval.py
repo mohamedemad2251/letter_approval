@@ -229,7 +229,7 @@ class LetterLetter(models.Model):
     # approver_ids = fields.One2many('approval.approver', 'request_id', string="Approvers", check_company=True,
     #                                compute='_compute_approver_ids', store=True, readonly=False)
 
-    approval_request_id = fields.Many2one('approval.request',string="Request Subject", copy=False)
+    approval_request_id = fields.Many2one('approval.request',string="Request Reason", copy=False)
     request_owner_name= fields.Char(related='approval_request_id.request_owner_id.name')
     can_submit = fields.Boolean(compute='_compute_can_submit')
     can_download = fields.Boolean(compute='_compute_can_download',store=False)
