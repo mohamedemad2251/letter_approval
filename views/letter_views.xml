@@ -93,7 +93,7 @@
                 
                 <xpath expr="//group[@name='optional-fields-1']" position="inside">
 <!--                    This is a tricky field, ensure the user is one of the approvers, the status of request is pending AND it doesn't have a letter already-->
-                    <field name="approval_request_id" required="True" domain="[('approver_ids.user_id','=',uid),('request_status','=','pending'),('letter_ids','=',False)]" options="{'no_create': True, 'no_create_edit': True}" readonly="status != 'draft'"/>
+                    <field name="approval_request_id" required="True" domain="[('approver_ids.user_id','=',uid),('request_status','=','pending'),('letter_ids','=',False),('category_id.name','=','Letter Approval')]" options="{'no_create': True, 'no_create_edit': True}" readonly="status != 'draft'"/>
                 </xpath>
 <!--                <xpath expr="//group[@name='optional-fields-2']" position="inside">-->
 <!--                </xpath>-->
