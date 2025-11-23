@@ -15,6 +15,7 @@
         'views/letter_views.xml',
         'views/approval_views.xml',
         'data/approval_category_data.xml',
+        'actions/actions.xml',
     ],
     'installable' : True,
 }

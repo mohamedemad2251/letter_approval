@@ -147,8 +147,9 @@ class ApprovalRequest(models.Model):
 
             # --- Parallel approvals (not sequenced) ---
             else:
+                approved_count = len(self.approver_ids.filtered(lambda a: a.status == 'approved'))
                 pending_approvers = self.approver_ids.filtered(lambda a: a.status == 'pending')
-                if pending_approvers and len(pending_approvers) <= 1 and not self.letter_ids:
+                if pending_approvers and (approved_count+1) >= self.approval_minimum and not self.letter_ids:
                     raise UserError(
                         'You cannot approve as you are the last/only approver left. '
                         'Please attach/create the letter first.'
@@ -186,6 +187,7 @@ class ApprovalRequest(models.Model):
         # Create the letter with default values
         letter = self.env['letter.letter'].create({
             'letter_name': self.name or "Approval Letter",
+            'has_approval_request': True,
             'approval_request_id': self.id,
             'request_owner_name': self.request_owner_id.name if self.request_owner_id else '',
             'template_id': self.template_id.id if self.template_id else None,
@@ -239,15 +241,25 @@ class LetterLetter(models.Model):
 
     addressed_to = fields.Text(related='approval_request_id.addressed_to')
 
+    # This field will govern if an approval request is needed or not for the entire logic, this will affect
+    # letter_approval drastically, so proper testing is due
+    has_approval_request = fields.Boolean("Has Request Reason?")
+
     _unique_approval_request_letter = models.Constraint(
          "UNIQUE(approval_request_id)",
          "Each approval request can only be linked to one letter.")
 
 
-    @api.onchange('approval_request_id')
+    @api.onchange('has_approval_request')
+    def _clear_request(self):
+        for record in self:
+            if not record.has_approval_request:
+                record.approval_request_id = None
+
+    @api.onchange('has_approval_request','approval_request_id')
     def _compute_employee(self):
         self.ensure_one()
-        if self.approval_request_id:
+        if self.has_approval_request and self.approval_request_id:
             self.template_id = self.approval_request_id.template_id if self.approval_request_id.template_id else None
             if self.template_id and self.template_id.template_module == 'hr':
                 self.employee_id = self.approval_request_id.request_owner_id.employee_id.id if self.approval_request_id.request_owner_id.employee_id else None
@@ -260,7 +272,7 @@ class LetterLetter(models.Model):
         # Call parent implementation (letter_hr or letter.base depending on MRO) - no sudo() on super() call
         super()._compute_replaced_content()
         # Use sudo() only when accessing protected template_id field
-        if self.approval_request_id:
+        if self.has_approval_request and self.approval_request_id:
             template = self.sudo().template_id
             if template and template.template_module == 'hr' and self.replaced_content:
                 addressed_to_text = self.approval_request_id.sudo().addressed_to if self.approval_request_id.addressed_to else 'N/A'
@@ -268,19 +280,22 @@ class LetterLetter(models.Model):
 
     def reject_action(self):
         for record in self:
-            if not record.approval_request_id:
-                raise UserError("Before you reject a letter, you have to select an approval request")
-            # If user is one of the approvers
-            if record.approval_request_id.request_status == 'pending' and record.env.user in record.approval_request_id.mapped('approver_ids.user_id'):
-                user_approver = record.approval_request_id.approver_ids.filtered(lambda a: a.user_id == record.env.user)
-                current_approver = record.approval_request_id.approver_ids.filtered(lambda a: a.status == 'pending')
-                if user_approver.status == 'pending':
-                    record.approval_request_id.action_refuse()
-                elif user_approver.status == 'waiting':
-                    raise UserError(f'You cannot reject before the previous approver. Current approver: {current_approver.user_id.name}')
-            if record.approval_request_id.request_status == 'approved':
-                record.status = 'issued'
-            if record.approval_request_id.request_status == 'refused':
+            if record.has_approval_request:
+                if not record.approval_request_id:
+                    raise UserError("Before you reject a letter, you have to select an approval request")
+                # If user is one of the approvers
+                if record.approval_request_id.request_status == 'pending' and record.env.user in record.approval_request_id.mapped('approver_ids.user_id'):
+                    user_approver = record.approval_request_id.approver_ids.filtered(lambda a: a.user_id == record.env.user)
+                    current_approver = record.approval_request_id.approver_ids.filtered(lambda a: a.status == 'pending')
+                    if user_approver.status == 'pending':
+                        record.approval_request_id.action_refuse()
+                    elif user_approver.status == 'waiting':
+                        raise UserError(f'You cannot reject before the previous approver. Current approver: {current_approver.user_id.name}')
+                if record.approval_request_id.request_status == 'approved':
+                    record.status = 'issued'
+                if record.approval_request_id.request_status == 'refused':
+                    record.status = 'rejected'
+            else:
                 record.status = 'rejected'
             return {
                 'type': 'ir.actions.client',
@@ -289,36 +304,42 @@ class LetterLetter(models.Model):
 
     def submit_action(self):
         self.ensure_one()
-        if not self.approval_request_id:
-            raise UserError("Before you issue a letter, you have to select an approval request")
-        user_approver = self.approval_request_id.approver_ids.filtered(lambda a: a.user_id == self.env.user)
-        current_approver = self.approval_request_id.approver_ids.filtered(lambda a: a.status == 'pending')
-        if user_approver.status == 'pending':
-            user_approver.action_approve()
-            self.status = 'pending'
-        elif user_approver.status == 'waiting':
-            raise UserError(f'You cannot approve before the previous approver. Current approver: {current_approver.user_id.name}')
-        if self.approval_request_id.request_status == 'approved':
+        if self.has_approval_request:
+            if not self.approval_request_id:
+                raise UserError("Before you issue a letter, you have to select an approval request")
+            user_approver = self.approval_request_id.approver_ids.filtered(lambda a: a.user_id == self.env.user)
+            current_approver = self.approval_request_id.approver_ids.filtered(lambda a: a.status == 'pending')
+            if user_approver.status == 'pending':
+                user_approver.action_approve()
+                self.status = 'pending'
+            elif user_approver.status == 'waiting':
+                raise UserError(f'You cannot approve before the previous approver. Current approver: {current_approver.user_id.name}')
+            if self.approval_request_id.request_status == 'approved':
+                self.status = 'issued'
+            if self.approval_request_id.request_status == 'refused':
+                self.status = 'rejected'
+        else:
             self.status = 'issued'
-        if self.approval_request_id.request_status == 'refused':
-            self.status = 'rejected'
         return {
             'type': 'ir.actions.client',
             'tag': 'reload',
         }
 
-    @api.depends('approval_request_id.approver_ids.status')
+    @api.depends('has_approval_request','approval_request_id.approver_ids.status')
     def _compute_can_submit(self):
         for record in self:
-            user = record.env.user
-            approvers = record.approval_request_id.approver_ids
-            # filter approvers assigned to this user
-            user_approvers = approvers.filtered(lambda a: a.user_id == user)
-            # If user is an approver AND hasn't approved yet → can submit
-            if user_approvers and any(a.status != 'approved' for a in user_approvers):
-                record.can_submit = True
+            if record.has_approval_request:
+                user = record.env.user
+                approvers = record.approval_request_id.approver_ids
+                # filter approvers assigned to this user
+                user_approvers = approvers.filtered(lambda a: a.user_id == user)
+                # If user is an approver AND hasn't approved yet → can submit
+                if user_approvers and any(a.status != 'approved' for a in user_approvers):
+                    record.can_submit = True
+                else:
+                    record.can_submit = False
             else:
-                record.can_submit = False
+                record.can_submit = True
 
     @api.depends('status', 'delivery_method', 'approval_request_id')
     def _compute_can_download(self):
@@ -326,19 +347,29 @@ class LetterLetter(models.Model):
         for record in self:
             record.can_download = False  # default to hidden
 
-            # No approval request? never downloadable
-            if not record.approval_request_id:
-                continue
+            if record.has_approval_request:
+                # No approval request? never downloadable
+                if not record.approval_request_id:
+                    continue
 
-            owner_user = record.approval_request_id.request_owner_id if record.approval_request_id.request_owner_id else None
-            # Request owner: can download only digital letters and when issued/downloaded
-            if owner_user == user:
-                if record.status in ('issued', 'downloaded') and record.delivery_method == 'digital':
-                    record.can_download = True
+                owner_user = record.approval_request_id.request_owner_id if record.approval_request_id.request_owner_id else None
+                # Request owner: can download only digital letters and when issued/downloaded
+                if owner_user == user:
+                    if record.status in ('issued', 'downloaded') and record.delivery_method == 'digital':
+                        record.can_download = True
+                else:
+                    # HR/Manager approvers: can download if status is issued/downloaded/rejected
+                    if record.status in ('issued', 'downloaded','rejected'):
+                        record.can_download = True
             else:
-                # HR/Manager approvers: can download if status is issued/downloaded
-                if record.status in ('issued', 'downloaded'):
-                    record.can_download = True
+                if record.env.user != record.employee_id.user_id:
+                    if record.env.user.has_group('hr.group_hr_user') or record.env.user.has_group('hr.group_hr_manager'):
+                        if record.status in ('issued','rejected','downloaded'):
+                            record.can_download = True
+                else:
+                    if record.status in ('issued', 'downloaded') and record.delivery_method == 'digital':
+                        record.can_download = True
+
 
     def reset_to_draft(self):
         self.ensure_one()
@@ -356,26 +387,48 @@ class LetterLetter(models.Model):
         self.ensure_one()
         for record in self:
             # TO BE ADDED ON LATER (You need to affiliate a letter with the request)
-            if record.status == 'issued' and record.env.user == record.approval_request_id.request_owner_id:
-                # Bypass access rights ONLY for this update, because the security rule prevents this user from writing in the record.
-                record.sudo().write({'status': 'downloaded'})
-            elif record.status == 'draft':
-                raise UserError('You cannot download this letter until you issue it first. Click "Submit".')
+            if record.has_approval_request:
+                if record.status == 'issued' and record.env.user == record.approval_request_id.request_owner_id:
+                    # Bypass access rights ONLY for this update, because the security rule prevents this user from writing in the record.
+                    record.sudo().write({'status': 'downloaded'})
+                elif record.status == 'draft':
+                    raise UserError('You cannot download this letter until you issue it first. Click "Submit".')
+                else:
+                    pass
+                if record.status == 'issued' or record.status == 'downloaded':
+                    return super().print_letter()
             else:
-                pass
-            if record.status == 'issued' or record.status == 'downloaded':
-                return super().print_letter()
+                if record.status == 'issued' and record.env.user == record.employee_id.user_id:
+                    record.sudo().write({'status': 'downloaded'})
+                elif record.status == 'draft':
+                    raise UserError('You cannot download this letter until you issue it first. Click "Submit".')
+                else:
+                    pass
+                if record.status == 'issued' or record.status == 'downloaded':
+                    return super().print_letter()
+
 
     def save_letter_docx(self):
         for record in self:
-            if record.status == 'issued' and record.env.user == record.approval_request_id.request_owner_id:
-                # Bypass access rights ONLY for this update, because the security rule prevents this user from writing in the record.
-                record.sudo().write({'status': 'downloaded'})
-            elif record.status == 'draft':
-                raise UserError('You cannot download this letter until you issue it first. Click "Submit".')
+            if record.has_approval_request:
+                if record.status == 'issued' and record.env.user == record.approval_request_id.request_owner_id:
+                    # Bypass access rights ONLY for this update, because the security rule prevents this user from writing in the record.
+                    record.sudo().write({'status': 'downloaded'})
+                elif record.status == 'draft':
+                    raise UserError('You cannot download this letter until you issue it first. Click "Submit".')
+                else:
+                    pass
+                if record.status == 'issued' or record.status == 'downloaded':
+                    return super().save_letter_docx()
             else:
-                pass
-        return super().save_letter_docx()
+                if record.status == 'issued' and record.env.user == record.employee_id.user_id:
+                    record.sudo().write({'status': 'downloaded'})
+                elif record.status == 'draft':
+                    raise UserError('You cannot download this letter until you issue it first. Click "Submit".')
+                else:
+                    pass
+                if record.status == 'issued' or record.status == 'downloaded':
+                    return super().save_letter_docx()
 
 
 class LetterResetWizard(models.TransientModel):

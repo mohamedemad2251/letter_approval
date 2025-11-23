@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <odoo>
-    <data noupdate="1">
+    <data>
 
         <record id="letter_approval_user_see_own" model="ir.rule">
             <field name="name">letter.approval.user.see.own</field>
@@ -10,7 +10,7 @@
             <field name="perm_write">0</field>
             <field name="perm_create">0</field>
             <field name="perm_unlink">0</field>
-            <field name="domain_force">[('approval_request_id.request_owner_id','=',user.id),('status','in',['issued','downloaded','rejected'])]</field>
+            <field name="domain_force">[('approval_request_id.request_owner_id','=',user.id),('status','in',['issued','downloaded'])]</field>
         </record>
 
 <!--        The Letter Is Owned By The Approver-->
@@ -50,6 +50,48 @@
             <field name="domain_force">
               [('approval_request_id.request_owner_id','!=',user.id),
                ('approval_request_id.approver_ids.user_id','=',user.id)]
+            </field>
+        </record>
+
+        <!-- Non-approval letters: HR users can see & manage all -->
+        <record id="letter_non_approval_all_for_approvals" model="ir.rule">
+            <field name="name">letter.non_approval.all.for.hr</field>
+            <field name="model_id" ref="letter_writer.model_letter_letter"/>
+            <!-- Apply to HR users + managers -->
+            <field name="groups" eval="[
+                (4, ref('hr.group_hr_user')),
+                (4, ref('hr.group_hr_manager'))
+            ]"/>
+            <field name="perm_read">1</field>
+            <field name="perm_write">1</field>
+            <field name="perm_create">1</field>
+            <field name="perm_unlink">1</field>
+            <field name="domain_force">
+                [
+                    ('has_approval_request', '=', False),
+                    '|',
+                        ('employee_id.user_id', '!=', user.id),
+                        ('status', '!=', 'draft')
+                ]
+            </field>
+        </record>
+
+        <!-- Non-approval letters: base users can see their own (by employee) -->
+        <record id="letter_non_approval_employee_own" model="ir.rule">
+            <field name="name">letter.non_approval.employee.own</field>
+            <field name="model_id" ref="letter_writer.model_letter_letter"/>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <!-- Respect ir.model.access: base users only need read here -->
+            <field name="perm_read">1</field>
+            <field name="perm_write">0</field>
+            <field name="perm_create">0</field>
+            <field name="perm_unlink">0</field>
+            <field name="domain_force">
+                [
+                    ('has_approval_request', '=', False),
+                    ('employee_id.user_id', '=', user.id),
+                    ('status','in',('issued','downloaded'))
+                ]
             </field>
         </record>
 

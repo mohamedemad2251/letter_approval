@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<odoo>
+    <data>
+
+        <record id="letter_writer.letter_letter_action" model="ir.actions.act_window">
+            <field name="context">
+                {
+                    'search_default_assigned_to_me': 1,
+                    'search_default_my_letters': 1,
+                    'search_default_created_by_me': 1,
+                }
+            </field>
+        </record>
+
+    </data>
+</odoo>

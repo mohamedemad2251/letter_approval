@@ -16,7 +16,7 @@
 
                 <xpath expr="//button[@name='print_letter']" position="attributes">
                     <attribute name="invisible">
-                        status == 'draft' or status == 'pending' or status == 'rejected'
+                        not can_download
                     </attribute>
                 </xpath>
 
@@ -44,6 +44,9 @@
                 <xpath expr="//field[@name='employee_id']" position="attributes">
                     <attribute name="readonly">
                         status != 'draft'
+                    </attribute>
+                    <attribute name="domain">
+                        [('employee_id.user_id','!=',uid)]
                     </attribute>
                 </xpath>
                 <xpath expr="//field[@name='template_id']" position="attributes">
@@ -93,12 +96,31 @@
                 
                 <xpath expr="//group[@name='optional-fields-1']" position="inside">
 <!--                    This is a tricky field, ensure the user is one of the approvers, the status of request is pending AND it doesn't have a letter already-->
-                    <field name="approval_request_id" required="True" domain="[('approver_ids.user_id','=',uid),('request_status','=','pending'),('letter_ids','=',False),('category_id.name','=','Letter Approval')]" options="{'no_create': True, 'no_create_edit': True}" readonly="status != 'draft'"/>
+                    <field name="has_approval_request" readonly="status != 'draft'" widget="boolean_toggle"/>
+                    <field name="approval_request_id" required="has_approval_request" domain="[('approver_ids.user_id','=',uid),('request_status','=','pending'),('letter_ids','=',False),('category_id.name','=','Letter Approval')]"
+                           readonly="status != 'draft'"
+                           invisible="not has_approval_request"/>
                 </xpath>
 <!--                <xpath expr="//group[@name='optional-fields-2']" position="inside">-->
 <!--                </xpath>-->
             </field>
         </record>
+
+        <record model="ir.ui.view" id="letter_letter_search_view_extension">
+            <field name="name">letter.letter.search.view.extension</field>
+            <field name="model">letter.letter</field>
+            <field name="inherit_id" ref="letter_writer.letter_letter_search_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@name='module_groupby']" position="after">
+                    <filter name="assigned_to_me" string="Assigned To Me" domain="[('approval_request_id.approver_ids.user_id','=',uid)]"/>
+                    <filter name="my_letters" string="My Letters" domain="[('employee_id.user_id','=',uid),('status','in',('issued','downloaded'))]"/>
+                    <filter name="created_by_me" string="Created By Me" domain="[('create_uid','=',uid)]"/>
+                </xpath>
+            </field>
+        </record>
+
+
+
 
 
         <!-- Hide base Templates menu -->
