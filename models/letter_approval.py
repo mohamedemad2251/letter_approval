@@ -15,6 +15,102 @@ class ApprovalCategory(models.Model):
         CATEGORY_SELECTION, string="Addressed To", default="required", required=True,
         help="Personnel/Organization this letter is addressed to (Only in a Letter Approval Request)")
 
+    def write(self, vals):
+        # Normal behavior first
+        res = super().write(vals)
+
+        # Only react when approvers or manager_approval actually changed
+        if 'approver_ids' not in vals and 'manager_approval' not in vals:
+            return res
+
+        for category in self:
+            # Limit the logic to this one specific category
+            if category.name != 'Letter Approval':
+                continue
+
+            # Find all NEW / PENDING requests of this category
+            requests = self.env['approval.request'].search([
+                ('category_id', '=', category.id),
+                ('request_status', 'in', ['new', 'pending']),
+            ])
+
+            for request in requests:
+                old_request_status = request.request_status
+                old_approver_ids = request.approver_ids
+
+                # Build a map: user_id -> old status
+                status_map = {
+                    appr.user_id.id: appr.status
+                    for appr in old_approver_ids
+                    if appr.user_id
+                }
+
+                # Track users we already added (to avoid duplicates)
+                seen_user_ids = set()
+
+                # 1) Clear existing approvers
+                commands = [(5, 0, 0)]  # remove all one2many lines
+
+                # 2) Manager approver, if configured
+                if category.manager_approval in ['approver', 'required']:
+                    employee = request.request_owner_id.employee_id
+                    manager = employee.parent_id if employee else False
+                    manager_user = manager.user_id if manager else False
+
+                    if manager_user and manager_user.id not in seen_user_ids:
+                        if old_request_status == 'new':
+                            manager_status = status_map.get(manager_user.id, 'new')
+                        elif old_request_status == 'pending':
+                            manager_status = status_map.get(manager_user.id, 'pending')
+                        else:
+                            manager_status = status_map.get(manager_user.id, 'new')
+
+                        commands.append((
+                            0, 0, {
+                            'user_id': manager_user.id,
+                            'status': manager_status,
+                            'required': category.manager_approval == 'required',
+                        }
+                        ))
+                        seen_user_ids.add(manager_user.id)
+
+                # 3) Category-level approvers
+                for cat_line in category.approver_ids:
+                    if not cat_line.user_id:
+                        continue
+
+                    user = cat_line.user_id
+
+                    # Skip if we already added this user (e.g., as manager)
+                    if user.id in seen_user_ids:
+                        continue
+
+                    # Reuse old status if this user was already an approver
+                    if old_request_status == 'new':
+                        user_status = status_map.get(user.id, 'new')
+                    elif old_request_status == 'pending':
+                        user_status = status_map.get(user.id, 'pending')
+                    else:
+                        user_status = status_map.get(user.id, 'new')
+
+                    commands.append((
+                        0, 0, {
+                        'user_id': user.id,
+                        'status': user_status,
+                        'required': cat_line.required,
+                    }
+                    ))
+                    seen_user_ids.add(user.id)
+
+                # 4) Apply the new set of approvers
+                if commands:
+                    request.approver_ids = commands
+
+                # 5) Preserve overall request status
+                request.request_status = old_request_status
+
+        return res
+
 
 # Approval Request Class (To add Addressed To & Special Content text fields)
 class ApprovalRequest(models.Model):
