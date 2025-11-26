@@ -176,9 +176,23 @@ class ApprovalRequest(models.Model):
 
     def _inverse_template_select(self):
         for record in self:
-            # raise UserError(record.template_select)
-            record.template_id = self.env['letter.template'].browse(record.template_select)
-            # record.template_id = record.template_select
+            sel = record.template_select
+
+            if not sel:
+                record.template_id = False
+                continue
+
+            # If somehow a list/tuple comes from the client, pick the first value
+            if isinstance(sel, (list, tuple)):
+                sel = sel[0]
+
+            # Selection values are usually strings, Many2one expects an int
+            try:
+                sel_id = int(sel)
+            except (TypeError, ValueError):
+                sel_id = False
+
+            record.template_id = sel_id
 
     @api.model
     def _get_template_selection(self):
